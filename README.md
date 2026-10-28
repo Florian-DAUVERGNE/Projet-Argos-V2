@@ -48,7 +48,7 @@ Le détail (contrat MQTT, formats de description et de configuration, cycle de v
 | Étape | Contenu | État |
 |---|---|---|
 | 0 | Spécification et structure du dépôt | Fait |
-| 1 | Noyau firmware (mode secteur) + pilote `relais` | À faire |
+| 1 | Noyau firmware (mode secteur) + pilote `relais` | Fait |
 | 2 | Registre + interface générique minimale | À faire |
 | 3 | Pilote `vedirect` (BMV, MPPT) | À faire |
 | 4 | Mode batterie + pilote `temperature` | À faire |

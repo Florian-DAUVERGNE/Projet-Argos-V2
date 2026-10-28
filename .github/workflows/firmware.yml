@@ -37,7 +37,22 @@ jobs:
 
       - name: Compiler
         working-directory: firmware
-        run: pio run -e ${{ matrix.env }}
+        run: |
+          set -o pipefail
+          pio run -e ${{ matrix.env }} 2>&1 | tee compilation.log
+
+      - name: Résumer avertissements et mémoire
+        if: always()
+        working-directory: firmware
+        run: |
+          # Avertissements du code Argos (hors bibliothèques), en annotations GitHub
+          grep -E '^src/[^:]+:[0-9]+:[0-9]+: warning:' compilation.log | sort -u | \
+            sed -E 's#^(src/[^:]+):([0-9]+):[0-9]+: warning: (.*)#::warning file=firmware/\1,line=\2::\3#' || true
+          # Occupation mémoire
+          grep -E '^(RAM|Flash):' compilation.log | while read -r ligne; do
+            echo "::notice title=Mémoire ${{ matrix.env }}::$ligne"
+            echo "- \`${{ matrix.env }}\` $ligne" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Conserver le binaire
         uses: actions/upload-artifact@v4

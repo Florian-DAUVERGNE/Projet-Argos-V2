@@ -63,6 +63,7 @@ class Noyau {
   std::vector<Instance> instances_;
   String configTexte_;
   long version_ = 0;
+  long versionRefusee_ = -1;
   String nom_;
   uint32_t rappelMs_ = 60000;
 

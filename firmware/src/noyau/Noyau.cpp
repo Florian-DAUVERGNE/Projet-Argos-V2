@@ -86,11 +86,14 @@ void Noyau::demarrer() {
 
   demarrages_ = stockage::compterDemarrage();
 
+  // Le bouton est lu avant de démarrer les pilotes, qui ne doivent jamais
+  // voir leur broche reconfigurée ensuite.
+  bool portailDemande = boutonBootMaintenu();
+
   // Les pilotes démarrent avant le réseau : l'objet fonctionne même hors ligne.
   String config = stockage::chargerConfiguration();
   if (config.length() > 0) appliquerConfiguration(config, false);
 
-  bool portailDemande = boutonBootMaintenu();
   bool reseauConnu = stockage::chargerReseau(reseau_);
   if (portailDemande || !reseauConnu) {
     // Sans réseau connu, le portail reste ouvert ; sinon il se referme après 5 min.
@@ -137,8 +140,8 @@ void Noyau::appliquerConfiguration(const String& texte, bool depuisReseau) {
   DeserializationError erreurJson = deserializeJson(doc, texte);
   long version = doc["version"] | 0L;
 
-  if (depuisReseau && !erreurJson && version <= version_) {
-    // Message retenu déjà appliqué (cas normal à chaque reconnexion).
+  if (depuisReseau && !erreurJson && (version <= version_ || version == versionRefusee_)) {
+    // Message retenu déjà traité, accepté ou refusé (cas normal à chaque reconnexion).
     return;
   }
 
@@ -153,6 +156,7 @@ void Noyau::appliquerConfiguration(const String& texte, bool depuisReseau) {
   }
 
   if (!erreurs.empty()) {
+    versionRefusee_ = version;
     accuseVersion_ = version;
     accuseOk_ = false;
     accuseErreurs_ = erreurs;
@@ -182,6 +186,7 @@ void Noyau::appliquerConfiguration(const String& texte, bool depuisReseau) {
     }
     reappliquerSouhaits();
 
+    versionRefusee_ = version;
     accuseVersion_ = version;
     accuseOk_ = false;
     accuseErreurs_ = erreurs;
