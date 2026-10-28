@@ -81,7 +81,7 @@ Tous les topics d'un objet commencent par `argos/<id>/`.
 | `state/<cle>` | objet → | Oui | Valeur actuelle d'une capacité |
 | `set/<cle>` | → objet | Selon le type | Ordre sur une capacité (§ 5.2) |
 | `diag` | objet → | Oui | Compteurs de diagnostic (§ 10) |
-| `cmd` | → objet | Non | Commande ponctuelle : `redemarrer`, `identifier` |
+| `cmd` | → objet | Non | Commande ponctuelle : `redemarrer`, `diag` (publier les diagnostics tout de suite) |
 | `ota` | → objet | Oui | Demande de mise à jour (§ 11) |
 
 ### 5.1 Statut
@@ -140,6 +140,13 @@ Types de capacités :
 | `action` | Écriture seule | Impulsion portail | Bouton |
 
 Champs facultatifs : `unite`, `precision`, `min`, `max`, `categorie` (`mesure` par défaut, ou `diagnostic` pour les valeurs techniques à masquer par défaut).
+
+La description contient aussi :
+- `config_version` : la version de la configuration appliquée ;
+- `carte` : le profil de carte (puce, broches utilisables en sortie, broches en entrée seule, ports série libres) ;
+- `pilotes_disponibles` : les types de pilotes compilés dans ce firmware.
+
+C'est ce qui permettra à l'interface de proposer un formulaire de configuration limité aux choix valides.
 
 La clé d'une capacité est `<instance de pilote>/<mesure>`, ce qui permet d'avoir plusieurs pilotes du même type sur un objet (BMV et MPPT, par exemple).
 

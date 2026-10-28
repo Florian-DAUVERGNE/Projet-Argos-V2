@@ -1,0 +1,61 @@
+name: Firmware
+
+on:
+  push:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware.yml"
+  pull_request:
+    paths:
+      - "firmware/**"
+      - ".github/workflows/firmware.yml"
+
+jobs:
+  compiler:
+    name: Compiler (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [esp32, esp32c3, esp32c6]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ matrix.env }}-${{ hashFiles('firmware/platformio.ini') }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Compiler
+        working-directory: firmware
+        run: |
+          set -o pipefail
+          pio run -e ${{ matrix.env }} 2>&1 | tee compilation.log
+
+      - name: Résumer avertissements et mémoire
+        if: always()
+        working-directory: firmware
+        run: |
+          # Avertissements du code Argos (hors bibliothèques), en annotations GitHub
+          grep -E '^src/[^:]+:[0-9]+:[0-9]+: warning:' compilation.log | sort -u | \
+            sed -E 's#^(src/[^:]+):([0-9]+):[0-9]+: warning: (.*)#::warning file=firmware/\1,line=\2::\3#' || true
+          # Occupation mémoire
+          grep -E '^(RAM|Flash):' compilation.log | while read -r ligne; do
+            echo "::notice title=Mémoire ${{ matrix.env }}::$ligne"
+            echo "- \`${{ matrix.env }}\` $ligne" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Conserver le binaire
+        uses: actions/upload-artifact@v4
+        with:
+          name: argos-${{ matrix.env }}
+          path: firmware/.pio/build/${{ matrix.env }}/firmware.bin
